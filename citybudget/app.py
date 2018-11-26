@@ -18,6 +18,10 @@ e_df = pd.read_csv(EXPENSE_FILE, delimiter=';')
 r_df = pd.read_csv(REVENUE_FILE, delimiter=';')
 expense_total_df = e_df[e_df['level'] == 0][years]
 revenue_total_df = r_df[r_df['level'] == 0][years]
+expense_df = e_df[e_df['level'] == 1]
+revenue_df = r_df[r_df['level'] == 1]
+expense_sorted_df = expense_df.sort_values(by=['2016'], ascending=False)
+revenue_sorted_df = revenue_df.sort_values(by=['2016'], ascending=False)
 
 external_stylesheets = [
     {
@@ -29,12 +33,6 @@ external_stylesheets = [
 ]
 
 app = dash.Dash(external_stylesheets=external_stylesheets)
-
-expense_df = e_df[e_df['level'] == 1]
-revenue_df = r_df[r_df['level'] == 1]
-expense_sorted_df = expense_df.sort_values(by=['2016'], ascending=False)
-revenue_sorted_df = revenue_df.sort_values(by=['2016'], ascending=False)
-
 
 app.layout = html.Div(children=[
     html.Nav([html.A("Durham County Budget Dashboard", className="navbar-brand text-white")],
@@ -70,8 +68,6 @@ app.layout = html.Div(children=[
         ], className="container-fluid bg-light rounded col-6 border")
     ], style={'margin-bottom': 50, 'margin-top': 10, 'margin-left': 5, 'margin-right': 5}, className="row"),
 
-    html.P(),
-    html.P(),
     html.Div([
         html.Div([
             html.Div([
