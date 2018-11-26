@@ -31,60 +31,78 @@ external_stylesheets = [
 app = dash.Dash(external_stylesheets=external_stylesheets)
 
 expense_df = e_df[e_df['level'] == 1]
-expense_sorted_df = expense_df.sort_values(by=['2016'], ascending=False)
 revenue_df = r_df[r_df['level'] == 1]
+expense_sorted_df = expense_df.sort_values(by=['2016'], ascending=False)
+revenue_sorted_df = revenue_df.sort_values(by=['2016'], ascending=False)
 
 
 app.layout = html.Div(children=[
     html.Nav([html.A("Durham County Budget Dashboard", className="navbar-brand text-white")],
              className="navbar navbar-expand-sm bg-primary navbar-dark"),
-    html.H1('durham city expenses!'),
-    html.Div('Sams dashbord'),
-    html.Div([
-        html.Div([
-            dcc.Dropdown(
-                id='exp-vs-rev-year',
-                options=[{'label': year, 'value': year}
-                         for year in years_reverse],
-                value='2016',
-                clearable=False
-            )
-        ], style={'width': '48%', 'display': 'inline-block'}, className="col-3"),
-        dcc.Graph(id='exp-vs-rev-pie-chart')
-    ], className="container-fluid bg-light rounded col-9"),
 
     html.Div([
         html.Div([
-            dcc.Graph(id='exp-vs-rev-bar-chart')
-        ], style={'margin-top': 20}),
+            html.Div([
+                dcc.Graph(id='exp-vs-rev-bar-chart')
+            ], style={'margin-top': 10}),
+            html.Div([
+                dcc.RangeSlider(
+                    id='year-range-slider',
+                    min=0,
+                    max=len(years) - 1,
+                    value=[0, len(years) - 1],
+                    marks=dict(zip(range(len(years)), years)),
+                    included=False
+                )], style={'margin-bottom': 30, 'margin-top': 5})
+        ], className="container-fluid bg-light rounded col-6 border"),
+
         html.Div([
-            dcc.RangeSlider(
-                id='year-range-slider',
-                min=0,
-                max=len(years) - 1,
-                value=[0, len(years) - 1],
-                marks=dict(zip(range(len(years)), years)),
-                included=False
-            )]
-        )], style={'width': '48%', 'display': 'inline-block'}),
+            html.Div([
+                dcc.Dropdown(
+                    id='exp-vs-rev-year',
+                    options=[{'label': year, 'value': year}
+                             for year in years_reverse],
+                    value='2016',
+                    clearable=False
+                )
+            ], style={'width': '48%', 'display': 'inline-block'}, className="col-3"),
+            dcc.Graph(id='exp-vs-rev-pie-chart')
+        ], className="container-fluid bg-light rounded col-6 border")
+    ], style={'margin-bottom': 50, 'margin-top': 10, 'margin-left': 5, 'margin-right': 5}, className="row"),
+
     html.P(),
     html.P(),
     html.Div([
         html.Div([
-            dcc.Dropdown(
-                id='department-multi-dropdown',
-                options=[{'label': i.replace(' Total', ''), 'value': i}
-                         for i in expense_sorted_df['level1']],
-                value=['WATER MANAGEMENT Total',
-                       'POLICE Total', 'PUBLIC WORKS Total'],
-                multi=True
-            )], style={'width': '48%', 'display': 'inline-block'}
-        ),
-        html.Div([
-            dcc.Graph(id='exp-line-chart')
-        ], style={'margin-top': 20})
-    ], style={'width': '100%', 'display': 'inline-block'})
+            html.Div([
+                dcc.Dropdown(
+                    id='exp-department-multi-dropdown',
+                    options=[{'label': i.replace(' Total', ''), 'value': i}
+                             for i in expense_sorted_df['level1']],
+                    value=['WATER MANAGEMENT Total',
+                           'POLICE Total', 'PUBLIC WORKS Total'],
+                    multi=True
+                )], style={'display': 'inline-block'}, className="col-9"),
+            html.Div([
+                dcc.Graph(id='exp-line-chart')
+            ], style={'margin-top': 10})
+        ], className="col-6 container-fluid bg-light rounded col-6 border"),
 
+        html.Div([
+            html.Div([
+                dcc.Dropdown(
+                    id='rev-department-multi-dropdown',
+                    options=[{'label': i.replace(' Total', ''), 'value': i}
+                             for i in revenue_sorted_df['level1']],
+                    value=['UNDEFINED Total', 'WATER MANAGEMENT Total',
+                           'PUBLIC WORKS Total', 'FINANCE Total'],
+                    multi=True
+                )], style={'display': 'inline-block'}, className="col-9"),
+            html.Div([
+                dcc.Graph(id='rev-line-chart')
+            ], style={'margin-top': 10})
+        ], className="col-6 container-fluid bg-light rounded col-6 border")
+    ], style={'margin-bottom': 50, 'margin-left': 5, 'margin-right': 5}, className="row")
 ], className="container-fluid")
 
 
@@ -120,20 +138,20 @@ def update_pie_chart(fiscal_year):
             "annotations": [
                 {
                     "font": {
-                        "size": 20
+                        "size": 16
                     },
                     "showarrow": False,
                     "text": "Expense",
-                    "x": 0.21,
+                    "x": 0.20,
                     "y": 0.5
                 },
                 {
                     "font": {
-                        "size": 20
+                        "size": 16
                     },
                     "showarrow": False,
                     "text": "Revenue",
-                    "x": 0.79,
+                    "x": 0.80,
                     "y": 0.5
                 }
             ]
@@ -170,25 +188,55 @@ def update_bar_chart(index):
             "bargap": 0.15,
             "bargroupgap": 0.1,
             "yaxis": {
-                "title": "USD (Billions)"
+                "title": "USD (Millions)"
             }
         }
     }
 
 
 @app.callback(Output('exp-line-chart', 'figure'),
-              [Input('department-multi-dropdown', 'value')])
-def update_line_chart(department_picker):
+              [Input('exp-department-multi-dropdown', 'value')])
+def update_exp_line_chart(department_picker):
     traces = []
     for department in department_picker:
         df = expense_df[expense_df['level1'] == department]
-        traces.append(
-            {'x': years, 'y': df[years].iloc[0], 'name': department.replace(' Total', '')})
+        traces.append({
+            'x': years,
+            'y': df[years].iloc[0],
+            'name': department.replace(' Total', '')
+        })
     fig = {
         'data': traces,
-        'layout': {'title': 'trend'}
+        'layout': {
+            'title': 'Expense Trend by Department {}-{}'.format(years[0], years[-1]),
+            "yaxis": {
+                "title": "USD"
+            }
+        }
     }
-    print(fig)
+    return fig
+
+
+@app.callback(Output('rev-line-chart', 'figure'),
+              [Input('rev-department-multi-dropdown', 'value')])
+def update_rev_line_chart(department_picker):
+    traces = []
+    for department in department_picker:
+        df = revenue_df[revenue_df['level1'] == department]
+        traces.append({
+            'x': years,
+            'y': df[years].iloc[0],
+            'name': department.replace(' Total', '')
+        })
+    fig = {
+        'data': traces,
+        'layout': {
+            'title': 'Revenue Trend by Department {}-{}'.format(years[0], years[-1]),
+            "yaxis": {
+                "title": "USD"
+            }
+        }
+    }
     return fig
 
 
