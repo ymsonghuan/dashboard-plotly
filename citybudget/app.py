@@ -120,7 +120,6 @@ def update_pie_chart(fiscal_year):
             {
                 "values": revenue_df[fiscal_year],
                 "labels": revenue_df['level1'].str.replace(' Total', ''),
-                "text": ["CO2"],
                 "textposition": "inside",
                 "domain": {"x": [0.52, 1]},
                 "name": "Revenue",
@@ -136,19 +135,19 @@ def update_pie_chart(fiscal_year):
                     "font": {
                         "size": 16
                     },
-                    "showarrow": False,
-                    "text": "Expense",
                     "x": 0.20,
-                    "y": 0.5
+                    "y": 0.5,
+                    "showarrow": False,
+                    "text": "Expense"
                 },
                 {
                     "font": {
                         "size": 16
                     },
-                    "showarrow": False,
-                    "text": "Revenue",
                     "x": 0.80,
-                    "y": 0.5
+                    "y": 0.5,
+                    "showarrow": False,
+                    "text": "Revenue"
                 }
             ]
         }
